@@ -22,7 +22,7 @@ class _GridScreenState extends State<GridScreen> {
   void _initializeCells() {
     _cells = List.generate(
       30 * 30,
-      (index) => Cell(
+          (index) => Cell(
           alive: false,
           index: index,
           neighbors: Cell.getAdjacentIndices(index)),
