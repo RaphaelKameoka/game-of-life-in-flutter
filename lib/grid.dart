@@ -12,6 +12,7 @@ class GridScreen extends StatefulWidget {
 
 class _GridScreenState extends State<GridScreen> {
   late List<Cell> _cells;
+  bool gameIsRunning = false;
 
   void initState() {
     super.initState();
@@ -29,43 +30,58 @@ class _GridScreenState extends State<GridScreen> {
   }
 
   bool _hasAliveCells() {
-    return _cells.any((cell) => cell.alive);
+    bool hasAlive = _cells.any((cell) => cell.alive);
+    if (!hasAlive){
+      gameIsRunning = false;
+    }
+    return hasAlive;
   }
 
   void _nextStep() {
     List<Cell> newCells = List.from(_cells);
 
-    for (int i = 0; i < _cells.length; i++) {
-      int aliveNeighbors = 0;
+    if (gameIsRunning){
+      for (int i = 0; i < _cells.length; i++) {
+        int aliveNeighbors = 0;
 
-      for (int neighborIndex in _cells[i].neighbors) {
-        if (_cells[neighborIndex].alive) {
-          aliveNeighbors += 1;
+        for (int neighborIndex in _cells[i].neighbors) {
+          if (_cells[neighborIndex].alive) {
+            aliveNeighbors += 1;
+          }
+        }
+
+        if (_cells[i].alive) {
+          if (aliveNeighbors < 2 || aliveNeighbors > 3) {
+            newCells[i] =
+                Cell(alive: false, index: i, neighbors: _cells[i].neighbors);
+          }
+        } else {
+          if (aliveNeighbors == 3) {
+            newCells[i] =
+                Cell(alive: true, index: i, neighbors: _cells[i].neighbors);
+          }
         }
       }
 
-      if (_cells[i].alive) {
-        if (aliveNeighbors < 2 || aliveNeighbors > 3) {
-          newCells[i] =
-              Cell(alive: false, index: i, neighbors: _cells[i].neighbors);
-        }
-      } else {
-        if (aliveNeighbors == 3) {
-          newCells[i] =
-              Cell(alive: true, index: i, neighbors: _cells[i].neighbors);
-        }
-      }
+      setState(() {
+        _cells = newCells;
+      });
+    } else {
+      return;
     }
 
-    setState(() {
-      _cells = newCells;
-    });
+
   }
 
   void _startGame() async{
-    while (_hasAliveCells()) {
-      _nextStep();
-      await Future.delayed(const Duration(milliseconds: 500));
+    if (gameIsRunning){
+      return;
+    } else{
+      gameIsRunning = true;
+      while (_hasAliveCells()) {
+        _nextStep();
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
     }
   }
 
@@ -75,7 +91,6 @@ class _GridScreenState extends State<GridScreen> {
         _cells[i].alive = false;
       }
     });
-
   }
 
   @override
@@ -121,10 +136,21 @@ class _GridScreenState extends State<GridScreen> {
                   ),
                   child: IconButton(
                       iconSize: 70,
+                      onPressed: (){gameIsRunning = false;},
+                      icon: const Icon(Icons.pause)),
+                ),
+                const SizedBox(width: 30),
+                Container(
+                  decoration: const BoxDecoration(
+                      color: Colors.purple,
+                      borderRadius: BorderRadius.all(Radius.circular(100))
+                  ),
+                  child: IconButton(
+                      iconSize: 70,
                       onPressed: _startGame,
                       icon: const Icon(Icons.play_arrow)),
                 ),
-                const SizedBox(width: 50),
+                const SizedBox(width: 30),
                 Container(
                   decoration: const BoxDecoration(
                       color: Colors.purple,
